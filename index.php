@@ -1,7 +1,11 @@
 <?php include('inc/head.php');
 if (isset($_POST['unlink'])) {
-    unlink($_POST['unlink']);
-    $success = "Le fichier a été correctement supprimé";
+    if (unlink($_POST['unlink'])) {
+        $success = "Le fichier a été correctement supprimé";
+    }
+    else {
+        $error = 'Le fichier n\'a pas été supprimé';
+    }
 }
 if (isset($_POST['content'])) {
     $getFileToModify = $_POST['filePath'];
@@ -22,9 +26,8 @@ if (isset($_POST['content'])) {
         $i = 2;
         while ($i < $files_n) {
             if (is_dir($rootDirectory . '/' . $files[$i])) {
-//            echo "Dossier : $files[$i] <br/>";
                 ?>
-                <p>- Dossier : <?= $files[$i] . '<br/>'; ?></p>
+                <p>Dossier : <?= $files[$i] . '<br/>'; ?></p>
                 <button type="submit" class="btn btn-default">Supprimer tout le dossier</button>
                 <?php
                 $subRootDirectory = $rootDirectory . '/' . $files[$i];
@@ -54,6 +57,7 @@ if (isset($_POST['content'])) {
                                 <p>
                                     <a href="?f=<?= $lastRootDirectory . '/' . $lastFiles[$li]; ?>"><?= "--- fichier : $lastFiles[$li]"; ?></a>
                                     <button type="submit" class="btn btn-default">Supprimer</button>
+                                    <input type="hidden" name="unlink" value="<?= $lastRootDirectory . '/' . $lastFiles[$li]; ?>"/>
                                 </p>
                                 <?php
                             }
@@ -73,6 +77,7 @@ if (isset($_POST['content'])) {
             } else {
                 ?>
                 <p><a href="?f=<?= $rootDirectory . '/' . $files[$i]; ?>"><?= "fichier : $files[$i]"; ?></a></p>
+                <input type="hidden" name="unlink" value="<?= $rootDirectory . '/' . $files[$i]; ?>"/>
                 <?php
             }
             $i++;
