@@ -1,12 +1,37 @@
 <?php include('inc/head.php');
-if (isset($_POST['unlink'])) {
+
+///// SI JE VEUX SUPPRIMER UN FICHIER /////
+if (isset($_POST['unlink']) !== 0) {
     if (unlink($_POST['unlink'])) {
         $success = "Le fichier a été correctement supprimé";
-    }
-    else {
+        $_POST['unlink'] = 0;
+    } else {
         $error = 'Le fichier n\'a pas été supprimé';
     }
 }
+
+///// SI JE VEUX SUPPRIMER UN DOSSIER /////
+if (isset($_POST['unlinkDirectory'])) {
+    $dir = $_POST['unlinkDirectory'];
+    function delete($dir)
+    {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (is_dir($dir . '/' . $object)) {
+                        delete($dir . '/' . $object);
+                    } else {
+                        unlink($dir . '/' . $object);
+                    }
+                }
+            }
+            (rmdir($dir));
+        }
+    }
+}
+
+///// SI JE VEUX EDITER UN FICHIER/////
 if (isset($_POST['content'])) {
     $getFileToModify = $_POST['filePath'];
     $fileToModify = fopen($getFileToModify, "w");
@@ -19,6 +44,7 @@ if (isset($_POST['content'])) {
     <p>Voici le contenu de mes répertoires et fichiers :</p>
     <form action="index.php" method="POST">
         <?php
+        ///// MON BACK OFFICE /////
         $rootDirectory = 'files';
         $files = array_diff(scandir($rootDirectory), ['..', '.']);
         $files_n = count(scandir($rootDirectory));
@@ -29,6 +55,7 @@ if (isset($_POST['content'])) {
                 ?>
                 <p>Dossier : <?= $files[$i] . '<br/>'; ?></p>
                 <button type="submit" class="btn btn-default">Supprimer tout le dossier</button>
+                <input type="hidden" name="unlinkDirectory" value="<?= $rootDirectory . '/' . $files[$i]; ?>"/>
                 <?php
                 $subRootDirectory = $rootDirectory . '/' . $files[$i];
                 $subFiles = array_diff(scandir($subRootDirectory), ['..', '.']);
@@ -40,6 +67,8 @@ if (isset($_POST['content'])) {
                         ?>
                         <p>- Dossier : <?= $subFiles[$si] . '<br/>'; ?></p>
                         <button type="submit" class="btn btn-default">Supprimer tout le dossier</button>
+                        <input type="hidden" name="unlinkDirectory"
+                               value="<?= $subRootDirectory . '/' . $subFiles[$si]; ?>"/>
                         <?php
                         $lastRootDirectory = $subRootDirectory . '/' . $subFiles[$si];
                         $lastFiles = array_diff(scandir($lastRootDirectory), ['.', '..']);
@@ -51,13 +80,16 @@ if (isset($_POST['content'])) {
                                 ?>
                                 <p>--- Dossier : <?= $lastFiles[$li] . '<br/>'; ?></p>
                                 <button type="submit" class="btn btn-default">Supprimer tout le dossier</button>
+                                <input type="hidden" name="unlinkDirectory"
+                                       value="<?= $lastRootDirectory . '/' . $lastFiles[$li]; ?>"/>
                                 <?php
                             } else {
                                 ?>
                                 <p>
                                     <a href="?f=<?= $lastRootDirectory . '/' . $lastFiles[$li]; ?>"><?= "--- fichier : $lastFiles[$li]"; ?></a>
                                     <button type="submit" class="btn btn-default">Supprimer</button>
-                                    <input type="hidden" name="unlink" value="<?= $lastRootDirectory . '/' . $lastFiles[$li]; ?>"/>
+                                    <input type="hidden" name="unlink"
+                                           value="<?= $lastRootDirectory . '/' . $lastFiles[$li]; ?>"/>
                                 </p>
                                 <?php
                             }
@@ -68,7 +100,8 @@ if (isset($_POST['content'])) {
                         <p>
                             <a href="?f=<?= $subRootDirectory . '/' . $subFiles[$si]; ?>"><?= "- fichier : $subFiles[$si]"; ?></a>
                             <button type="submit" class="btn btn-default">Supprimer</button>
-                            <input type="hidden" name="unlink" value="<?= $subRootDirectory . '/' . $subFiles[$si]; ?>"/>
+                            <input type="hidden" name="unlink"
+                                   value="<?= $subRootDirectory . '/' . $subFiles[$si]; ?>"/>
                         </p>
                         <?php
                     }
@@ -87,6 +120,7 @@ if (isset($_POST['content'])) {
 </div>
 <div>
     <?php
+    ///// CONTRÔLE DE L'EXTENSION AVANT D'EDITER /////
     if (isset($_GET['f'])) {
         $checkFileExtension = pathinfo($_GET['f'], PATHINFO_EXTENSION);
         if (!in_array($checkFileExtension, ['jpg'])) {
